@@ -1,24 +1,28 @@
-/* --- Global Variables (Girlypop Astro Palette) --- */
+/* --- Global Variables (Dark Mode Astro Palette) --- */
 :root {
-    --bg-main: #F7F7FF;         /* Pale Lavender/White Background */
-    --bg-card: #FFFFFF;         /* Crisp White Card Background */
-    --text-dark: #374151;       /* Dark Gray Text */
-    --accent-pink: #F9A8D4;     /* Light Pink Accent */
+    --bg-main: #0A0A1F;         /* Deep Midnight Blue/Dark Mode BG */
+    --bg-card: #151535;         /* Darker Card Background */
+    --text-light: #E0E0FF;      /* Light Lavender/White Text */
+    --text-muted: #9CA3AF;      /* Muted Gray Text */
+    --accent-pink: #F472B6;     /* Pink Accent */
     --accent-lavender: #A5B4FC; /* Soft Lavender Blue Accent */
-    --accent-green: #A7F3D0;    /* Mint Green Accent */
-    --shadow-main: 0 4px 10px rgba(165, 180, 252, 0.25); /* Soft Lavender Shadow */
-    --shadow-hover: 0 8px 18px rgba(165, 180, 252, 0.6);
-    --color-success: #10B981;
+    --accent-green: #34D399;    /* Mint Green Accent for success */
+    --shadow-main: 0 4px 10px rgba(10, 10, 31, 0.7); /* Dark Shadow */
+    --shadow-hover: 0 8px 18px rgba(244, 114, 182, 0.2); /* Pink Glow on Hover */
 }
 
 /* --- Base Styles --- */
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-main);
-    color: var(--text-dark);
+    color: var(--text-light);
     min-height: 100vh;
     padding: 2rem;
-    transition: background-color 0.5s;
+    /* Subtle pink/lavender radial gradient overlay */
+    background-image: radial-gradient(circle at 15% 50%, rgba(244, 114, 182, 0.1) 0%, transparent 40%),
+                      radial-gradient(circle at 85% 90%, rgba(165, 180, 252, 0.05) 0%, transparent 40%);
+    background-attachment: fixed;
+    background-size: cover;
 }
 
 .poppins-font {
@@ -33,22 +37,23 @@ body {
     margin-bottom: 2rem;
     border-bottom: 2px solid var(--accent-lavender);
     padding-bottom: 1rem;
-    color: var(--text-dark);
+    color: var(--text-light);
 }
 #datetime-display {
     color: var(--accent-pink);
     font-family: 'Poppins', sans-serif;
 }
 #date-display {
-    color: var(--text-dark);
+    color: var(--text-light);
     opacity: 0.7;
 }
 
-/* --- Bento Grid Layout --- */
+/* --- Bento Grid Layout (FIXED FOR SCALING) --- */
 .bento-grid {
     display: grid;
+    /* Allow columns to size based on content and space available */
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    grid-auto-rows: 200px; /* Base row height for mobile/default */
+    grid-auto-rows: auto; /* CRITICAL FIX: Allows boxes to grow with content */
     gap: 16px; /* 4 units in Tailwind */
 }
 
@@ -56,7 +61,7 @@ body {
 @media (min-width: 1024px) {
     .bento-grid {
         grid-template-columns: repeat(3, 1fr);
-        grid-auto-rows: 150px; /* Finer control for desktop */
+        grid-auto-rows: auto;
     }
     #schedule-module {
         grid-column: span 1;
@@ -65,16 +70,16 @@ body {
     #apod-widget {
         grid-column: span 2; /* Wide row on desktop */
     }
-    /* Repositioning modules for aesthetic flow */
-    #goals-progress-module { grid-column: 2 / 3; grid-row: 3 / 4; }
-    #vibe-module { grid-column: 3 / 4; grid-row: 3 / 4; }
+    /* Adjusted positioning for visual balance */
+    #goals-progress-module { grid-column: 2 / 3; }
+    #vibe-module { grid-column: 3 / 4; }
 }
 
 
 /* --- Card Styles (The Bento Box) --- */
 .card {
     background-color: var(--bg-card);
-    border: 1px solid rgba(165, 180, 252, 0.5);
+    border: 1px solid rgba(165, 180, 252, 0.3);
     border-radius: 16px;
     padding: 1.5rem;
     box-shadow: var(--shadow-main);
@@ -89,11 +94,11 @@ body {
 .module-title {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--text-dark);
+    color: var(--text-light);
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid rgba(249, 168, 212, 0.3); /* Subtle pink divider */
+    border-bottom: 1px solid rgba(244, 114, 182, 0.3); /* Subtle pink divider */
     padding-bottom: 0.5rem;
 }
 
@@ -105,7 +110,7 @@ body {
     transition: all 0.4s ease;
 }
 .current-focus {
-    background-color: rgba(249, 168, 212, 0.2); /* Light pink background */
+    background-color: rgba(244, 114, 182, 0.15); /* Light pink background */
     border-left: 4px solid var(--accent-pink);
     animation: pulse-light 2s infinite alternate;
 }
@@ -114,21 +119,24 @@ body {
     to { box-shadow: 0 0 12px var(--accent-pink); }
 }
 
-/* --- Task Input/Button Styles --- */
+/* --- Input/Button Styles --- */
 .task-input, .notes-textarea {
     flex-grow: 1;
     padding: 0.75rem;
     border-radius: 8px;
     border: 1px solid var(--accent-lavender);
-    background-color: var(--bg-main);
-    color: var(--text-dark);
+    background-color: #0F0F28; /* Slightly lighter than card for contrast */
+    color: var(--text-light);
     font-size: 0.9rem;
     transition: border-color 0.3s, box-shadow 0.3s;
+}
+.task-input::placeholder, .notes-textarea::placeholder {
+    color: var(--text-muted);
 }
 .task-input:focus, .notes-textarea:focus {
     outline: none;
     border-color: var(--accent-pink);
-    box-shadow: 0 0 0 3px rgba(249, 168, 212, 0.3);
+    box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.3);
 }
 
 .task-btn {
@@ -137,12 +145,11 @@ body {
     font-weight: 500;
     padding: 0.75rem 1rem;
     border-radius: 8px;
-    margin-left: 0.5rem;
     transition: background-color 0.2s, box-shadow 0.2s;
 }
 .task-btn:hover {
     background-color: #8B94E5;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 10px rgba(165, 180, 252, 0.5);
 }
 
 /* Task List Items */
@@ -151,7 +158,7 @@ body {
     cursor: pointer;
 }
 #todo-list li input[type="checkbox"] {
-    accent-color: var(--accent-pink); /* Custom color for checkbox */
+    accent-color: var(--accent-pink);
     border-color: var(--accent-lavender);
 }
 .task-text.completed {
@@ -160,9 +167,18 @@ body {
     color: var(--accent-green);
 }
 
+/* Schedule List Items */
+#schedule-list .schedule-item {
+    cursor: pointer;
+    color: var(--text-muted);
+}
+#schedule-list .schedule-item span {
+    color: var(--text-light);
+}
+
 /* Habit Tracker Styles */
 .habit-row {
-    background-color: var(--bg-main);
+    background-color: #0F0F28;
     border: 1px solid var(--accent-lavender);
     padding: 0.75rem;
     border-radius: 8px;
@@ -181,9 +197,9 @@ body {
 .habit-btn:hover {
     background-color: #F472B6;
 }
-.habit-btn.bg-green-600 {
-    background-color: var(--color-success);
+.habit-btn.bg-green-500 {
+    background-color: var(--accent-green);
 }
-.habit-btn.bg-green-600:hover {
-    background-color: #059669;
+.habit-btn.bg-green-500:hover {
+    background-color: #10B981;
 }
