@@ -1,0 +1,334 @@
+// --- CONSTANTS AND INITIALIZATION ---
+// Using DEMO_KEY for Canvas environment. Get your own key from NASA for real use.
+const NASA_API_URL = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY";
+const LOCAL_STORAGE_KEYS = {
+    TASKS: 'girlypopTasks',
+    NOTES: 'girlypopNotes',
+    HABITS: 'girlypopHabits',
+    LAST_RESET: 'girlypopHabitResetDate'
+};
+const HABITS_CONFIG = [
+    { id: 'water', name: 'Hydrate (Fuel Check)', done: false },
+    { id: 'study', name: 'Launch Study Module', done: false },
+    { id: 'sleep', name: 'Log 8 Hrs Sleep', done: false }
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Load all persistent data and start continuous updates
+    loadData();
+    updateTime();
+    setInterval(updateTime, 1000);
+    updateScheduleHighlight();
+    setInterval(updateScheduleHighlight, 60000); // Check schedule every minute
+    setupListeners();
+    fetchAstronomyPicture();
+    startCountdown();
+});
+
+// --- CORE UTILITY FUNCTIONS ---
+
+function loadData() {
+    loadTasks();
+    loadNotes();
+    loadHabits();
+}
+
+function setupListeners() {
+    // Task Management
+    document.getElementById('add-task-btn').addEventListener('click', addTask);
+    document.getElementById('new-task').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addTask();
+    });
+    document.getElementById('todo-list').addEventListener('click', toggleTaskCompletion);
+
+    // Notes Persistence (Save 1 second after typing stops)
+    let notesTimeout;
+    document.getElementById('cosmic-notes').addEventListener('input', () => {
+        clearTimeout(notesTimeout);
+        notesTimeout = setTimeout(saveNotes, 1000);
+    });
+}
+
+// --- 1. CLOCK & DATE (GALACTIC CLOCK) ---
+
+function updateTime() {
+    const now = new Date();
+    // Galactic Clock (24-hour format)
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const timeString = now.toLocaleTimeString('en-US', timeOptions);
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateString = now.toLocaleDateString('en-US', dateOptions);
+
+    document.getElementById('datetime-display').textContent = timeString;
+    document.getElementById('date-display').textContent = dateString;
+}
+
+// --- 2. DAILY SCHEDULE HIGHLIGHT (PLANETARY FOCUS) ---
+
+const SCHEDULE = [
+    { start: 800, end: 900 },
+    { start: 900, end: 1200 },
+    { start: 1200, end: 1300 },
+    { start: 1300, end: 1600 },
+    { start: 1600, end: 1800 },
+    { start: 1800, end: 1900 },
+    { start: 1900, end: 2200 }
+];
+
+function updateScheduleHighlight() {
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const currentTime = hour * 100 + minute; // e.g., 9:30 AM -> 930
+
+    const scheduleItems = document.getElementById('schedule-list').children;
+
+    for (let i = 0; i < scheduleItems.length; i++) {
+        const item = scheduleItems[i];
+        const timeBlock = SCHEDULE[i];
+
+        item.classList.remove('current-focus');
+
+        // Check if the current time falls within the schedule block
+        if (currentTime >= timeBlock.start && currentTime < timeBlock.end) {
+            item.classList.add('current-focus');
+        }
+    }
+    // Ensure Lucide icons are re-rendered if the list wasn't static
+    lucide.createIcons();
+}
+
+
+// --- 3. TO-DO LIST (ORBITING TASKS) ---
+
+function loadTasks() {
+    // Only load incomplete tasks by default for a cleaner look
+    const allTasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.TASKS) || '[]');
+    const tasks = allTasks.sort((a, b) => a.completed - b.completed); // Incomplete first
+    const ul = document.getElementById('todo-list');
+    ul.innerHTML = '';
+
+    if (tasks.length === 0) {
+         ul.innerHTML = '<li class="p-2 text-gray-400 italic text-sm">No tasks. Time to launch!</li>';
+         return;
+    }
+    tasks.forEach(task => ul.appendChild(createTaskElement(task)));
+}
+
+function saveTasks(tasks) {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+    loadTasks(); // Re-render the list
+}
+
+function createTaskElement(task) {
+    const li = document.createElement('li');
+    li.setAttribute('data-id', task.id);
+    li.className = 'flex items-center p-2 rounded-lg transition-all duration-300 hover:bg-gray-100';
+    li.innerHTML = `
+        <input type="checkbox" ${task.completed ? 'checked' : ''} class="mr-3 w-5 h-5 border-gray-300 rounded focus:ring-pink-500">
+        <span class="task-text flex-grow text-sm text-gray-700 ${task.completed ? 'completed' : ''}">${task.text}</span>
+        <button data-action="delete" class="text-gray-400 hover:text-red-500 ml-3 transition-colors duration-200">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+    `;
+    // Ensure icons are rendered immediately on creation
+    lucide.createIcons();
+    return li;
+}
+
+function addTask() {
+    const input = document.getElementById('new-task');
+    const text = input.value.trim();
+    if (text === '') return;
+
+    const tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.TASKS) || '[]');
+    const newTask = {
+        id: Date.now(),
+        text: text,
+        completed: false
+    };
+    tasks.push(newTask);
+    saveTasks(tasks);
+    input.value = '';
+}
+
+function toggleTaskCompletion(event) {
+    const li = event.target.closest('li');
+    if (!li) return;
+    const taskId = parseInt(li.getAttribute('data-id'));
+    let tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.TASKS));
+
+    if (event.target.closest('[data-action="delete"]')) {
+        // Delete task
+        tasks = tasks.filter(t => t.id !== taskId);
+    } else {
+        // Toggle completion
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            task.completed = !task.completed;
+        }
+    }
+    saveTasks(tasks);
+}
+
+// --- 4. GOALS COUNTDOWN ---
+
+function startCountdown() {
+    // Target date: Spring Break (e.g., March 10th of next year)
+    const now = new Date();
+    let targetYear = now.getFullYear();
+    let targetDate = new Date(`March 10, ${targetYear} 00:00:00`).getTime();
+
+    // If the target date has passed this year, set it for next year
+    if (now.getTime() > targetDate) {
+        targetYear++;
+        targetDate = new Date(`March 10, ${targetYear} 00:00:00`).getTime();
+    }
+
+    const countdownElement = document.getElementById('countdown');
+
+    const countdownInterval = setInterval(function() {
+        const now = new Date().getTime();
+        const distance = targetDate - now;
+
+        if (distance < 0) {
+            clearInterval(countdownInterval);
+            countdownElement.innerHTML = "SPRING BREAK IS HERE!";
+            return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        countdownElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }, 1000);
+}
+
+
+// --- 5. NASA APOD WIDGET ---
+
+async function fetchAstronomyPicture() {
+    const imageEl = document.getElementById('apod-image');
+    const titleEl = document.getElementById('apod-title');
+    const explanationEl = document.getElementById('apod-explanation');
+    const loadingMessage = 'Fetching Cosmic Data...';
+
+    // Show loading state
+    titleEl.textContent = loadingMessage;
+    imageEl.src = 'https://placehold.co/400x200/F9A8D4/FFFFFF?text=Fetching+Image';
+
+
+    try {
+        const response = await fetch(NASA_API_URL);
+        if (!response.ok) {
+            throw new Error(`NASA API returned status ${response.status}`);
+        }
+        const data = await response.json();
+
+        titleEl.textContent = data.title;
+
+        // Handle video vs image content
+        if (data.media_type === 'video') {
+            imageEl.src = data.thumbnail_url || 'https://placehold.co/400x200/A5B4FC/FFFFFF?text=Video+of+Day';
+            imageEl.alt = 'Video of the Day Thumbnail';
+            explanationEl.textContent = data.explanation.substring(0, 150) + '... (Click to view video)';
+        } else {
+            imageEl.src = data.hdurl || data.url; // Prefer HD image
+            imageEl.alt = data.title;
+            explanationEl.textContent = data.explanation.substring(0, 200) + '...'; // Truncate explanation
+        }
+
+    } catch (error) {
+        console.error("Failed to fetch APOD:", error);
+        titleEl.textContent = 'Cosmic Data Unavailable';
+        imageEl.src = 'https://placehold.co/400x200/F472B6/FFFFFF?text=Lost+Contact';
+        explanationEl.textContent = 'The telescope is temporarily offline. Please check your connection or try again later.';
+    }
+}
+
+// --- 6. QUICK LOG (COSMIC NOTES) ---
+
+function loadNotes() {
+    const notes = localStorage.getItem(LOCAL_STORAGE_KEYS.NOTES);
+    document.getElementById('cosmic-notes').value = notes || '';
+}
+
+function saveNotes() {
+    const notes = document.getElementById('cosmic-notes').value;
+    localStorage.setItem(LOCAL_STORAGE_KEYS.NOTES, notes);
+}
+
+// --- 7. HABIT TRACKER (STELLAR STREAK) ---
+
+function getCurrentDateKey() {
+    // Uses UTC day to ensure consistency across timezones for a daily reset
+    return new Date().toISOString().split('T')[0];
+}
+
+function loadHabits() {
+    // Check for daily reset
+    const lastResetDate = localStorage.getItem(LOCAL_STORAGE_KEYS.LAST_RESET);
+    const todayKey = getCurrentDateKey();
+
+    // Load habits from storage or use config default
+    let storedHabits = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.HABITS) || 'null');
+    let habits = storedHabits || HABITS_CONFIG;
+
+    if (lastResetDate !== todayKey) {
+        // If the day changed, reset 'done' status for all habits
+        habits = habits.map(h => ({ ...h, done: false }));
+        localStorage.setItem(LOCAL_STORAGE_KEYS.LAST_RESET, todayKey);
+    }
+
+    // Save the updated/reset habits (this also handles first-time load)
+    localStorage.setItem(LOCAL_STORAGE_KEYS.HABITS, JSON.stringify(habits));
+    renderHabits(habits);
+}
+
+function renderHabits(habits) {
+    const tracker = document.getElementById('habit-tracker');
+    tracker.innerHTML = '';
+
+    habits.forEach(habit => {
+        const buttonText = habit.done ? `<i data-lucide="check" class="w-4 h-4 mr-1"></i> Completed` : 'Check In';
+
+        const habitRow = document.createElement('div');
+        habitRow.className = 'habit-row';
+        habitRow.innerHTML = `
+            <span class="text-sm font-medium text-gray-700">${habit.name}</span>
+            <button class="habit-btn text-xs flex items-center ${habit.done ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-400 hover:bg-pink-500'}" data-habit-id="${habit.id}" data-done="${habit.done}">
+                ${buttonText}
+            </button>
+        `;
+        tracker.appendChild(habitRow);
+    });
+    // Re-render icons after adding new elements
+    lucide.createIcons();
+
+    // Add listener to the new buttons
+    tracker.querySelectorAll('.habit-btn').forEach(button => {
+        button.addEventListener('click', toggleHabit);
+    });
+}
+
+function toggleHabit(event) {
+    const habitId = event.currentTarget.getAttribute('data-habit-id');
+    const isDone = event.currentTarget.getAttribute('data-done') === 'true';
+
+    let habits = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.HABITS));
+
+    habits = habits.map(h => {
+        if (h.id === habitId) {
+            h.done = !isDone;
+        }
+        return h;
+    });
+
+    localStorage.setItem(LOCAL_STORAGE_KEYS.HABITS, JSON.stringify(habits));
+    renderHabits(habits);
+}
