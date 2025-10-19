@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Focus Dashboard</title>
+    <!-- Load Tailwind CSS utilities (used primarily for responsive grid layout) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons for aesthetic vectors -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <!-- Load Custom Bento Box Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Header: Welcome Message and Galactic Clock -->
+    <header id="header-area" class="poppins-font">
+        <h1 class="text-3xl md:text-5xl font-bold">Stellar Focus Dashboard</h1>
+        <div id="datetime-widget" class="flex flex-col items-end">
+            <div id="datetime-display" class="text-3xl font-bold"></div>
+            <div id="date-display" class="text-sm"></div>
+        </div>
+    </header>
+
+    <!-- Main Bento Grid Layout -->
+    <main class="bento-grid">
+
+        <!-- A1. Schedule (Orbital Path) - Tall Item -->
+        <section id="schedule-module" class="card col-span-1 row-span-2">
+            <h2 class="module-title"><i data-lucide="calendar-days" class="w-5 h-5 mr-2"></i> Daily Orbital Path</h2>
+            <ul id="schedule-list" class="space-y-2">
+                <!-- Schedule items remain here to define structure, JS will highlight -->
+                <li class="schedule-item flex justify-between">
+                    <span class="font-semibold text-gray-700">8:00 - 9:00</span>
+                    <span class="text-gray-500">Morning Routine & Fuel Check</span>
+                </li>
+                <li class="schedule-item flex justify-between">
+                    <span class="font-semibold text-gray-700">9:00 - 12:00</span>
+                    <span class="text-gray-500">Deep Work: CS Project</span>
+                </li>
+                <li class="schedule-item flex justify-between">
+                    <span class="font-semibold text-gray-700">12:00 - 1:00</span>
+                    <span class="text-gray-500">Lunar Nap & Refuel</span>
+                </li>
+                <li class="schedule-item flex justify-between">
+                    <span class="font-semibold text-gray-700">1:00 - 4:00</span>
+                    <span class="text-gray-500">Asynchronous Study: History</span>
+                </li>
+                <li class="schedule-item flex justify-between">
+                    <span class="font-semibold text-gray-700">4:00 - 6:00</span>
+                    <span class="text-gray-500">Crew Social Hour/Clubs</span>
+                </li>
+                <li class="schedule-item flex justify-between">
+                    <span class="font-semibold text-gray-700">6:00 - 7:00</span>
+                    <span class="text-gray-500">Dinner & Log Review</span>
+                </li>
+                <li class="schedule-item flex justify-between">
+                    <span class="font-semibold text-gray-700">7:00 - 10:00</span>
+                    <span class="text-gray-500">Final Boost/Prep for Tomorrow</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- A2. NASA APOD (Wide Item) -->
+        <section id="apod-widget" class="card lg:col-span-2">
+            <h2 class="module-title"><i data-lucide="telescope" class="w-5 h-5 mr-2"></i> NASA Transmission: APOD</h2>
+            <div id="apod-content" class="md:flex md:space-x-4">
+                <img id="apod-image" src="https://placehold.co/400x200/F9A8D4/FFFFFF?text=Fetching+Image" alt="Astronomy Picture of the Day Placeholder" class="w-full md:w-1/3 h-48 object-cover rounded-lg mb-3 md:mb-0">
+                <div class="md:w-2/3">
+                    <h3 id="apod-title" class="text-lg font-semibold text-gray-800 mb-1">Loading Daily Image...</h3>
+                    <p id="apod-explanation" class="text-sm text-gray-600">A moment of cosmic inspiration, brought to you daily from the stars. Please wait while the transmission arrives.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- A3. Countdown (Small Item) -->
+        <section id="goals-countdown-module" class="card">
+            <h2 class="module-title text-pink-500"><i data-lucide="rocket" class="w-5 h-5 mr-2"></i> Next Launch</h2>
+            <p class="text-2xl font-bold text-pink-500" id="countdown">Loading...</p>
+            <p class="text-sm text-gray-500">Days until Spring Break</p>
+        </section>
+
+        <!-- B1. To-Do List (Medium Item) -->
+        <section id="tasks-module" class="card">
+            <h2 class="module-title"><i data-lucide="list-checks" class="w-5 h-5 mr-2"></i> Orbiting Tasks</h2>
+            <div class="flex mb-3">
+                <input type="text" id="new-task" placeholder="Add task or anomaly..." class="task-input">
+                <button id="add-task-btn" class="task-btn">Add</button>
+            </div>
+            <ul id="todo-list" class="divide-y divide-gray-200">
+                <li class="p-2 text-gray-400 italic text-sm">No tasks. Time to launch!</li>
+            </ul>
+        </section>
+
+        <!-- B2. Habit Tracker (Small Item) -->
+        <section id="habit-module" class="card">
+            <h2 class="module-title"><i data-lucide="zap" class="w-5 h-5 mr-2"></i> Stellar Streak</h2>
+            <div id="habit-tracker" class="space-y-3">
+                <!-- Habits will be loaded here -->
+            </div>
+            <p class="text-xs italic text-gray-400 mt-3">Streaks reset at midnight UTC.</p>
+        </section>
+
+        <!-- C1. Quick Log (Small Item) -->
+        <section id="notes-module" class="card">
+            <h2 class="module-title"><i data-lucide="pencil" class="w-5 h-5 mr-2"></i> Cosmic Quick Log</h2>
+            <textarea id="cosmic-notes" placeholder="Log quick thoughts, breakthroughs, or supplies needed here..."
+                      class="notes-textarea"></textarea>
+        </section>
+
+        <!-- C2. Goals Progress (Small Item) -->
+        <section id="goals-progress-module" class="card">
+            <h2 class="module-title"><i data-lucide="target" class="w-5 h-5 mr-2"></i> Constellation Goals</h2>
+            <div class="space-y-4 text-sm">
+                <div>
+                    <p class="flex justify-between items-center mb-1">
+                        <span>CS Major Requirements</span>
+                        <span class="font-bold text-yellow-500">60%</span>
+                    </p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="h-2.5 rounded-full bg-yellow-400" style="width: 60%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <p class="flex justify-between items-center mb-1">
+                        <span>Read 10 Books</span>
+                        <span class="font-bold text-blue-500">30%</span>
+                    </p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="h-2.5 rounded-full bg-blue-400" style="width: 30%;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- C3. Vibe Player (Small Item) -->
+        <section id="vibe-module" class="card">
+            <h2 class="module-title"><i data-lucide="music" class="w-5 h-5 mr-2"></i> Cosmic Drone</h2>
+            <iframe width="100%" height="100" src="https://www.youtube.com/embed/jfKfPfyBkdg?autoplay=0&controls=0&mute=1"
+                    title="Lofi Hip Hop Radio" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen class="rounded-lg shadow-md"></iframe>
+            <blockquote class="text-center italic mt-3 text-gray-400 text-sm">
+                "Maintain orbital velocity."
+            </blockquote>
+        </section>
+
+    </main>
+
+    <!-- Load Logic -->
+    <script src="script.js"></script>
+</body>
+</html>
