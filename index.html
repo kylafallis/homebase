@@ -30,6 +30,18 @@
         <section id="schedule-module" class="card col-span-1 row-span-2">
             <h2 class="module-title"><i data-lucide="calendar-days" class="w-5 h-5 mr-2"></i> Daily Orbital Path</h2>
             <ul id="schedule-list" class="space-y-2">
+                <!-- Recommended HTML to add to index.html for Schedule Input -->
+<div class="mt-4 pt-4 border-t border-gray-200">
+    <h3 class="text-base font-semibold mb-2 text-pink-500">Add New Orbit</h3>
+    <div class="space-y-2">
+        <input type="number" id="new-schedule-start" placeholder="Start Time (e.g., 0900)" class="task-input w-full">
+        <input type="number" id="new-schedule-end" placeholder="End Time (e.g., 1200)" class="task-input w-full">
+        <input type="text" id="new-schedule-description" placeholder="Activity Description" class="task-input w-full">
+        <button id="add-schedule-btn" class="task-btn w-full">Launch New Entry</button>
+    </div>
+</div>
+
+If you add these elements and want me to implement the final `addScheduleEntry` and its listener in `script.js`, just let me know!
                 <!-- Schedule items remain here to define structure, JS will highlight -->
                 <li class="schedule-item flex justify-between">
                     <span class="font-semibold text-gray-700">8:00 - 9:00</span>
