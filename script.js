@@ -5,13 +5,26 @@ const LOCAL_STORAGE_KEYS = {
     TASKS: 'girlypopTasks',
     NOTES: 'girlypopNotes',
     HABITS: 'girlypopHabits',
-    LAST_RESET: 'girlypopHabitResetDate'
+    LAST_RESET: 'girlypopHabitResetDate',
+    SCHEDULE: 'girlypopSchedule' // <-- NEW: Key for storing the editable schedule
 };
 const HABITS_CONFIG = [
     { id: 'water', name: 'Hydrate (Fuel Check)', done: false },
     { id: 'study', name: 'Launch Study Module', done: false },
     { id: 'sleep', name: 'Log 8 Hrs Sleep', done: false }
 ];
+
+// --- DEFAULT DATA (Used for first-time load only) ---
+const DEFAULT_SCHEDULE = [
+    { id: 1, start: 800, end: 900, description: 'Morning Routine & Fuel Check' },
+    { id: 2, start: 900, end: 1200, description: 'Deep Work: CS Project' },
+    { id: 3, start: 1200, end: 1300, description: 'Lunar Nap & Refuel' },
+    { id: 4, start: 1300, end: 1600, description: 'Asynchronous Study: History' },
+    { id: 5, start: 1600, end: 1800, description: 'Crew Social Hour/Clubs' },
+    { id: 6, start: 1800, end: 1900, description: 'Dinner & Log Review' },
+    { id: 7, start: 1900, end: 2200, description: 'Final Boost/Prep for Tomorrow' }
+];
+
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Lucide Icons
@@ -34,6 +47,7 @@ function loadData() {
     loadTasks();
     loadNotes();
     loadHabits();
+    loadSchedule(); // <-- Now loads schedule from Local Storage
 }
 
 function setupListeners() {
@@ -43,6 +57,9 @@ function setupListeners() {
         if (e.key === 'Enter') addTask();
     });
     document.getElementById('todo-list').addEventListener('click', toggleTaskCompletion);
+
+    // Schedule Management: Listener for deleting entries
+    document.getElementById('schedule-list').addEventListener('click', handleScheduleClick);
 
     // Notes Persistence (Save 1 second after typing stops)
     let notesTimeout;
@@ -68,17 +85,11 @@ function updateTime() {
 
 // --- 2. DAILY SCHEDULE HIGHLIGHT (PLANETARY FOCUS) ---
 
-const SCHEDULE = [
-    { start: 800, end: 900 },
-    { start: 900, end: 1200 },
-    { start: 1200, end: 1300 },
-    { start: 1300, end: 1600 },
-    { start: 1600, end: 1800 },
-    { start: 1800, end: 1900 },
-    { start: 1900, end: 2200 }
-];
-
 function updateScheduleHighlight() {
+    // Load data dynamically
+    const scheduleData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.SCHEDULE) || '[]');
+    if (scheduleData.length === 0) return;
+
     const now = new Date();
     const hour = now.getHours();
     const minute = now.getMinutes();
@@ -88,19 +99,97 @@ function updateScheduleHighlight() {
 
     for (let i = 0; i < scheduleItems.length; i++) {
         const item = scheduleItems[i];
-        const timeBlock = SCHEDULE[i];
+        const entry = scheduleData[i];
 
         item.classList.remove('current-focus');
 
         // Check if the current time falls within the schedule block
-        if (currentTime >= timeBlock.start && currentTime < timeBlock.end) {
+        if (currentTime >= entry.start && currentTime < entry.end) {
             item.classList.add('current-focus');
         }
     }
-    // Ensure Lucide icons are re-rendered if the list wasn't static
-    lucide.createIcons();
 }
 
+// --- SCHEDULE MANAGEMENT FUNCTIONS (NEW) ---
+
+function formatTime(time) {
+    // Converts 800 -> 08:00
+    const h = Math.floor(time / 100);
+    const m = time % 100;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+
+function loadSchedule() {
+    // Load schedule from storage, if empty, save the default schedule
+    const schedule = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.SCHEDULE) || 'null');
+
+    if (!schedule || schedule.length === 0) {
+        saveSchedule(DEFAULT_SCHEDULE);
+    } else {
+        renderSchedule(schedule);
+    }
+}
+
+function saveSchedule(scheduleData) {
+    // Sort by start time before saving
+    const sortedSchedule = scheduleData.sort((a, b) => a.start - b.start);
+    localStorage.setItem(LOCAL_STORAGE_KEYS.SCHEDULE, JSON.stringify(sortedSchedule));
+    renderSchedule(sortedSchedule);
+    updateScheduleHighlight(); // Rerun highlight when data changes
+}
+
+function renderSchedule(scheduleData) {
+    const ul = document.getElementById('schedule-list');
+    ul.innerHTML = '';
+
+    if (scheduleData.length === 0) {
+        ul.innerHTML = '<li class="p-2 text-gray-400 italic text-sm">Schedule is clear. Add an entry below!</li>';
+        return;
+    }
+
+    scheduleData.forEach(entry => {
+        const li = document.createElement('li');
+        li.setAttribute('data-id', entry.id);
+        // Added group and hover classes to reveal the delete button on hover
+        li.className = 'schedule-item flex justify-between group cursor-pointer hover:bg-gray-100 p-2 -mx-2 rounded-lg';
+        li.innerHTML = `
+            <div class="flex-grow">
+                <span class="font-semibold text-gray-700">${formatTime(entry.start)} - ${formatTime(entry.end)}</span>
+                <span class="text-gray-500 block">${entry.description}</span>
+            </div>
+            <button data-action="delete-schedule" data-id="${entry.id}" class="text-gray-400 hover:text-red-500 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        `;
+        ul.appendChild(li);
+    });
+
+    lucide.createIcons(); // Rerender icons
+}
+
+function handleScheduleClick(event) {
+    const target = event.target.closest('[data-action="delete-schedule"]');
+    if (target) {
+        const entryId = parseInt(target.getAttribute('data-id'));
+        // Using window.confirm() here as the default is to only use it when necessary
+        // and a delete action warrants user confirmation.
+        if (confirm("Are you sure you want to delete this schedule entry?")) {
+            deleteScheduleEntry(entryId);
+        }
+    }
+    // Future expansion: Add logic for editing here if needed
+}
+
+function deleteScheduleEntry(id) {
+    const schedule = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.SCHEDULE) || '[]');
+    const updatedSchedule = schedule.filter(entry => entry.id !== id);
+    saveSchedule(updatedSchedule);
+}
+
+// NOTE: The function to ADD entries would be placed here and would require:
+// 1. Getting values from new HTML input fields (start time, end time, description).
+// 2. Creating a new entry object with a unique ID (Date.now()).
+// 3. Pushing it to the loaded schedule array and calling saveSchedule().
 
 // --- 3. TO-DO LIST (ORBITING TASKS) ---
 
