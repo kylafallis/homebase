@@ -1,0 +1,189 @@
+/* --- Global Variables (Girlypop Astro Palette) --- */
+:root {
+    --bg-main: #F7F7FF;         /* Pale Lavender/White Background */
+    --bg-card: #FFFFFF;         /* Crisp White Card Background */
+    --text-dark: #374151;       /* Dark Gray Text */
+    --accent-pink: #F9A8D4;     /* Light Pink Accent */
+    --accent-lavender: #A5B4FC; /* Soft Lavender Blue Accent */
+    --accent-green: #A7F3D0;    /* Mint Green Accent */
+    --shadow-main: 0 4px 10px rgba(165, 180, 252, 0.25); /* Soft Lavender Shadow */
+    --shadow-hover: 0 8px 18px rgba(165, 180, 252, 0.6);
+    --color-success: #10B981;
+}
+
+/* --- Base Styles --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    min-height: 100vh;
+    padding: 2rem;
+    transition: background-color 0.5s;
+}
+
+.poppins-font {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* --- Header & Clock --- */
+#header-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--accent-lavender);
+    padding-bottom: 1rem;
+    color: var(--text-dark);
+}
+#datetime-display {
+    color: var(--accent-pink);
+    font-family: 'Poppins', sans-serif;
+}
+#date-display {
+    color: var(--text-dark);
+    opacity: 0.7;
+}
+
+/* --- Bento Grid Layout --- */
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-auto-rows: 200px; /* Base row height for mobile/default */
+    gap: 16px; /* 4 units in Tailwind */
+}
+
+/* Desktop layout with specific sizing */
+@media (min-width: 1024px) {
+    .bento-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: 150px; /* Finer control for desktop */
+    }
+    #schedule-module {
+        grid-column: span 1;
+        grid-row: span 3; /* Tall column on desktop */
+    }
+    #apod-widget {
+        grid-column: span 2; /* Wide row on desktop */
+    }
+    /* Repositioning modules for aesthetic flow */
+    #goals-progress-module { grid-column: 2 / 3; grid-row: 3 / 4; }
+    #vibe-module { grid-column: 3 / 4; grid-row: 3 / 4; }
+}
+
+
+/* --- Card Styles (The Bento Box) --- */
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid rgba(165, 180, 252, 0.5);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-main);
+    transition: transform 0.3s, box-shadow 0.3s;
+    overflow: hidden; /* Important for clean edges */
+}
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+.module-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(249, 168, 212, 0.3); /* Subtle pink divider */
+    padding-bottom: 0.5rem;
+}
+
+/* --- Schedule Highlight (Planetary Focus) --- */
+.schedule-item {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.4s ease;
+}
+.current-focus {
+    background-color: rgba(249, 168, 212, 0.2); /* Light pink background */
+    border-left: 4px solid var(--accent-pink);
+    animation: pulse-light 2s infinite alternate;
+}
+@keyframes pulse-light {
+    from { box-shadow: 0 0 4px var(--accent-pink); }
+    to { box-shadow: 0 0 12px var(--accent-pink); }
+}
+
+/* --- Task Input/Button Styles --- */
+.task-input, .notes-textarea {
+    flex-grow: 1;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--accent-lavender);
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+.task-input:focus, .notes-textarea:focus {
+    outline: none;
+    border-color: var(--accent-pink);
+    box-shadow: 0 0 0 3px rgba(249, 168, 212, 0.3);
+}
+
+.task-btn {
+    background-color: var(--accent-lavender);
+    color: white;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-left: 0.5rem;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+.task-btn:hover {
+    background-color: #8B94E5;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Task List Items */
+#todo-list li {
+    padding: 0.75rem 0;
+    cursor: pointer;
+}
+#todo-list li input[type="checkbox"] {
+    accent-color: var(--accent-pink); /* Custom color for checkbox */
+    border-color: var(--accent-lavender);
+}
+.task-text.completed {
+    text-decoration: line-through;
+    opacity: 0.6;
+    color: var(--accent-green);
+}
+
+/* Habit Tracker Styles */
+.habit-row {
+    background-color: var(--bg-main);
+    border: 1px solid var(--accent-lavender);
+    padding: 0.75rem;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.habit-btn {
+    background-color: var(--accent-pink);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.habit-btn:hover {
+    background-color: #F472B6;
+}
+.habit-btn.bg-green-600 {
+    background-color: var(--color-success);
+}
+.habit-btn.bg-green-600:hover {
+    background-color: #059669;
+}
