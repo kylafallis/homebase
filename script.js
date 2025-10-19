@@ -6,8 +6,9 @@ const LOCAL_STORAGE_KEYS = {
     NOTES: 'girlypopNotes',
     HABITS: 'girlypopHabits',
     LAST_RESET: 'girlypopHabitResetDate',
-    SCHEDULE: 'girlypopSchedule' // <-- NEW: Key for storing the editable schedule
+    SCHEDULE: 'girlypopSchedule'
 };
+
 const HABITS_CONFIG = [
     { id: 'water', name: 'Hydrate (Fuel Check)', done: false },
     { id: 'study', name: 'Launch Study Module', done: false },
@@ -15,13 +16,14 @@ const HABITS_CONFIG = [
 ];
 
 // --- DEFAULT DATA (Used for first-time load only) ---
+// Using neutral, non-cringey descriptions
 const DEFAULT_SCHEDULE = [
     { id: 1, start: 800, end: 900, description: 'Morning Routine & Fuel Check' },
     { id: 2, start: 900, end: 1200, description: 'Deep Work: CS Project' },
-    { id: 3, start: 1200, end: 1300, description: 'Lunar Nap & Refuel' },
+    { id: 3, start: 1200, end: 1300, description: 'Refuel & Wellness Break' },
     { id: 4, start: 1300, end: 1600, description: 'Asynchronous Study: History' },
-    { id: 5, start: 1600, end: 1800, description: 'Crew Social Hour/Clubs' },
-    { id: 6, start: 1800, end: 1900, description: 'Dinner & Log Review' },
+    { id: 5, start: 1600, end: 1800, description: 'Social Hour/Clubs' },
+    { id: 6, start: 1800, end: 1900, description: 'Dinner & Review Log' },
     { id: 7, start: 1900, end: 2200, description: 'Final Boost/Prep for Tomorrow' }
 ];
 
@@ -47,7 +49,7 @@ function loadData() {
     loadTasks();
     loadNotes();
     loadHabits();
-    loadSchedule(); // <-- Now loads schedule from Local Storage
+    loadSchedule();
 }
 
 function setupListeners() {
@@ -58,8 +60,9 @@ function setupListeners() {
     });
     document.getElementById('todo-list').addEventListener('click', toggleTaskCompletion);
 
-    // Schedule Management: Listener for deleting entries
+    // Schedule Management
     document.getElementById('schedule-list').addEventListener('click', handleScheduleClick);
+    document.getElementById('add-schedule-btn').addEventListener('click', addScheduleEntry); // New listener for adding
 
     // Notes Persistence (Save 1 second after typing stops)
     let notesTimeout;
@@ -73,7 +76,6 @@ function setupListeners() {
 
 function updateTime() {
     const now = new Date();
-    // Galactic Clock (24-hour format)
     const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
     const timeString = now.toLocaleTimeString('en-US', timeOptions);
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -86,7 +88,6 @@ function updateTime() {
 // --- 2. DAILY SCHEDULE HIGHLIGHT (PLANETARY FOCUS) ---
 
 function updateScheduleHighlight() {
-    // Load data dynamically
     const scheduleData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.SCHEDULE) || '[]');
     if (scheduleData.length === 0) return;
 
@@ -110,24 +111,24 @@ function updateScheduleHighlight() {
     }
 }
 
-// --- SCHEDULE MANAGEMENT FUNCTIONS (NEW) ---
+// --- 3. SCHEDULE MANAGEMENT FUNCTIONS (EDITABLE) ---
 
 function formatTime(time) {
-    // Converts 800 -> 08:00
+    // Converts 800 -> 08:00 (24 hour format)
     const h = Math.floor(time / 100);
     const m = time % 100;
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
 }
 
 function loadSchedule() {
-    // Load schedule from storage, if empty, save the default schedule
-    const schedule = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.SCHEDULE) || 'null');
+    let schedule = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.SCHEDULE) || 'null');
 
+    // Initialize with default schedule if storage is empty
     if (!schedule || schedule.length === 0) {
-        saveSchedule(DEFAULT_SCHEDULE);
-    } else {
-        renderSchedule(schedule);
+        schedule = DEFAULT_SCHEDULE;
+        localStorage.setItem(LOCAL_STORAGE_KEYS.SCHEDULE, JSON.stringify(schedule));
     }
+    renderSchedule(schedule);
 }
 
 function saveSchedule(scheduleData) {
@@ -135,7 +136,7 @@ function saveSchedule(scheduleData) {
     const sortedSchedule = scheduleData.sort((a, b) => a.start - b.start);
     localStorage.setItem(LOCAL_STORAGE_KEYS.SCHEDULE, JSON.stringify(sortedSchedule));
     renderSchedule(sortedSchedule);
-    updateScheduleHighlight(); // Rerun highlight when data changes
+    updateScheduleHighlight();
 }
 
 function renderSchedule(scheduleData) {
@@ -143,41 +144,36 @@ function renderSchedule(scheduleData) {
     ul.innerHTML = '';
 
     if (scheduleData.length === 0) {
-        ul.innerHTML = '<li class="p-2 text-gray-400 italic text-sm">Schedule is clear. Add an entry below!</li>';
+        ul.innerHTML = '<li class="p-2 text-gray-500 italic text-sm">Schedule is clear. Add an entry below!</li>';
         return;
     }
 
     scheduleData.forEach(entry => {
         const li = document.createElement('li');
         li.setAttribute('data-id', entry.id);
-        // Added group and hover classes to reveal the delete button on hover
-        li.className = 'schedule-item flex justify-between group cursor-pointer hover:bg-gray-100 p-2 -mx-2 rounded-lg';
+        li.className = 'schedule-item flex justify-between group cursor-pointer hover:bg-gray-800 p-2 -mx-2 rounded-lg';
         li.innerHTML = `
             <div class="flex-grow">
-                <span class="font-semibold text-gray-700">${formatTime(entry.start)} - ${formatTime(entry.end)}</span>
+                <span class="font-semibold text-gray-300">${formatTime(entry.start)} - ${formatTime(entry.end)}</span>
                 <span class="text-gray-500 block">${entry.description}</span>
             </div>
-            <button data-action="delete-schedule" data-id="${entry.id}" class="text-gray-400 hover:text-red-500 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button data-action="delete-schedule" data-id="${entry.id}" class="text-gray-500 hover:text-red-400 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         `;
         ul.appendChild(li);
     });
 
-    lucide.createIcons(); // Rerender icons
+    lucide.createIcons();
 }
 
 function handleScheduleClick(event) {
     const target = event.target.closest('[data-action="delete-schedule"]');
     if (target) {
         const entryId = parseInt(target.getAttribute('data-id'));
-        // Using window.confirm() here as the default is to only use it when necessary
-        // and a delete action warrants user confirmation.
-        if (confirm("Are you sure you want to delete this schedule entry?")) {
-            deleteScheduleEntry(entryId);
-        }
+        console.log(`[ACTION]: Schedule entry with ID ${entryId} deleted.`);
+        deleteScheduleEntry(entryId);
     }
-    // Future expansion: Add logic for editing here if needed
 }
 
 function deleteScheduleEntry(id) {
@@ -186,22 +182,53 @@ function deleteScheduleEntry(id) {
     saveSchedule(updatedSchedule);
 }
 
-// NOTE: The function to ADD entries would be placed here and would require:
-// 1. Getting values from new HTML input fields (start time, end time, description).
-// 2. Creating a new entry object with a unique ID (Date.now()).
-// 3. Pushing it to the loaded schedule array and calling saveSchedule().
+function addScheduleEntry() {
+    const startInput = document.getElementById('new-schedule-start');
+    const endInput = document.getElementById('new-schedule-end');
+    const descInput = document.getElementById('new-schedule-description');
 
-// --- 3. TO-DO LIST (ORBITING TASKS) ---
+    const start = parseInt(startInput.value);
+    const end = parseInt(endInput.value);
+    const description = descInput.value.trim();
+
+    if (!start || !end || !description || isNaN(start) || isNaN(end)) {
+        console.error("Schedule Error: Please enter valid start time (e.g., 0900), end time, and a description.");
+        return;
+    }
+
+    if (start >= end) {
+        console.error("Schedule Error: Start time must be before end time.");
+        return;
+    }
+
+    const schedule = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.SCHEDULE) || '[]');
+    const newEntry = {
+        id: Date.now(),
+        start: start,
+        end: end,
+        description: description
+    };
+
+    schedule.push(newEntry);
+    saveSchedule(schedule);
+
+    // Clear inputs after successful addition
+    startInput.value = '';
+    endInput.value = '';
+    descInput.value = '';
+}
+
+
+// --- 4. TO-DO LIST (ORBITING TASKS) ---
 
 function loadTasks() {
-    // Only load incomplete tasks by default for a cleaner look
     const allTasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.TASKS) || '[]');
-    const tasks = allTasks.sort((a, b) => a.completed - b.completed); // Incomplete first
+    const tasks = allTasks.sort((a, b) => a.completed - b.completed);
     const ul = document.getElementById('todo-list');
     ul.innerHTML = '';
 
     if (tasks.length === 0) {
-         ul.innerHTML = '<li class="p-2 text-gray-400 italic text-sm">No tasks. Time to launch!</li>';
+         ul.innerHTML = '<li class="p-2 text-gray-500 italic text-sm">No tasks. Time to launch!</li>';
          return;
     }
     tasks.forEach(task => ul.appendChild(createTaskElement(task)));
@@ -209,21 +236,20 @@ function loadTasks() {
 
 function saveTasks(tasks) {
     localStorage.setItem(LOCAL_STORAGE_KEYS.TASKS, JSON.stringify(tasks));
-    loadTasks(); // Re-render the list
+    loadTasks();
 }
 
 function createTaskElement(task) {
     const li = document.createElement('li');
     li.setAttribute('data-id', task.id);
-    li.className = 'flex items-center p-2 rounded-lg transition-all duration-300 hover:bg-gray-100';
+    li.className = 'flex items-center p-2 rounded-lg transition-all duration-300 hover:bg-gray-800';
     li.innerHTML = `
-        <input type="checkbox" ${task.completed ? 'checked' : ''} class="mr-3 w-5 h-5 border-gray-300 rounded focus:ring-pink-500">
-        <span class="task-text flex-grow text-sm text-gray-700 ${task.completed ? 'completed' : ''}">${task.text}</span>
-        <button data-action="delete" class="text-gray-400 hover:text-red-500 ml-3 transition-colors duration-200">
+        <input type="checkbox" ${task.completed ? 'checked' : ''} class="mr-3 w-5 h-5 border-gray-600 rounded focus:ring-pink-500">
+        <span class="task-text flex-grow text-sm text-gray-300 ${task.completed ? 'completed' : ''}">${task.text}</span>
+        <button data-action="delete" class="text-gray-500 hover:text-red-400 ml-3 transition-colors duration-200">
             <i data-lucide="trash-2" class="w-4 h-4"></i>
         </button>
     `;
-    // Ensure icons are rendered immediately on creation
     lucide.createIcons();
     return li;
 }
@@ -251,27 +277,23 @@ function toggleTaskCompletion(event) {
     let tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.TASKS));
 
     if (event.target.closest('[data-action="delete"]')) {
-        // Delete task
         tasks = tasks.filter(t => t.id !== taskId);
     } else {
-        // Toggle completion
         const task = tasks.find(t => t.id === taskId);
-        if (task) {
-            task.completed = !task.completed;
+            if (task) {
+                task.completed = !task.completed;
+            }
         }
-    }
-    saveTasks(tasks);
+        saveTasks(tasks);
 }
 
-// --- 4. GOALS COUNTDOWN ---
+// --- 5. GOALS COUNTDOWN ---
 
 function startCountdown() {
-    // Target date: Spring Break (e.g., March 10th of next year)
     const now = new Date();
     let targetYear = now.getFullYear();
     let targetDate = new Date(`March 10, ${targetYear} 00:00:00`).getTime();
 
-    // If the target date has passed this year, set it for next year
     if (now.getTime() > targetDate) {
         targetYear++;
         targetDate = new Date(`March 10, ${targetYear} 00:00:00`).getTime();
@@ -299,7 +321,7 @@ function startCountdown() {
 }
 
 
-// --- 5. NASA APOD WIDGET ---
+// --- 6. NASA APOD WIDGET ---
 
 async function fetchAstronomyPicture() {
     const imageEl = document.getElementById('apod-image');
@@ -307,9 +329,8 @@ async function fetchAstronomyPicture() {
     const explanationEl = document.getElementById('apod-explanation');
     const loadingMessage = 'Fetching Cosmic Data...';
 
-    // Show loading state
     titleEl.textContent = loadingMessage;
-    imageEl.src = 'https://placehold.co/400x200/F9A8D4/FFFFFF?text=Fetching+Image';
+    imageEl.src = 'https://placehold.co/400x200/222/FFF?text=Fetching+Image';
 
 
     try {
@@ -321,26 +342,25 @@ async function fetchAstronomyPicture() {
 
         titleEl.textContent = data.title;
 
-        // Handle video vs image content
         if (data.media_type === 'video') {
-            imageEl.src = data.thumbnail_url || 'https://placehold.co/400x200/A5B4FC/FFFFFF?text=Video+of+Day';
+            imageEl.src = data.thumbnail_url || 'https://placehold.co/400x200/A5B4FC/E0E0FF?text=Video+of+Day';
             imageEl.alt = 'Video of the Day Thumbnail';
             explanationEl.textContent = data.explanation.substring(0, 150) + '... (Click to view video)';
         } else {
-            imageEl.src = data.hdurl || data.url; // Prefer HD image
+            imageEl.src = data.hdurl || data.url;
             imageEl.alt = data.title;
-            explanationEl.textContent = data.explanation.substring(0, 200) + '...'; // Truncate explanation
+            explanationEl.textContent = data.explanation.substring(0, 200) + '...';
         }
 
     } catch (error) {
         console.error("Failed to fetch APOD:", error);
         titleEl.textContent = 'Cosmic Data Unavailable';
-        imageEl.src = 'https://placehold.co/400x200/F472B6/FFFFFF?text=Lost+Contact';
+        imageEl.src = 'https://placehold.co/400x200/F472B6/E0E0FF?text=Lost+Contact';
         explanationEl.textContent = 'The telescope is temporarily offline. Please check your connection or try again later.';
     }
 }
 
-// --- 6. QUICK LOG (COSMIC NOTES) ---
+// --- 7. QUICK LOG (COSMIC NOTES) ---
 
 function loadNotes() {
     const notes = localStorage.getItem(LOCAL_STORAGE_KEYS.NOTES);
@@ -352,29 +372,24 @@ function saveNotes() {
     localStorage.setItem(LOCAL_STORAGE_KEYS.NOTES, notes);
 }
 
-// --- 7. HABIT TRACKER (STELLAR STREAK) ---
+// --- 8. HABIT TRACKER (STELLAR STREAK) ---
 
 function getCurrentDateKey() {
-    // Uses UTC day to ensure consistency across timezones for a daily reset
     return new Date().toISOString().split('T')[0];
 }
 
 function loadHabits() {
-    // Check for daily reset
     const lastResetDate = localStorage.getItem(LOCAL_STORAGE_KEYS.LAST_RESET);
     const todayKey = getCurrentDateKey();
 
-    // Load habits from storage or use config default
     let storedHabits = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.HABITS) || 'null');
     let habits = storedHabits || HABITS_CONFIG;
 
     if (lastResetDate !== todayKey) {
-        // If the day changed, reset 'done' status for all habits
         habits = habits.map(h => ({ ...h, done: false }));
         localStorage.setItem(LOCAL_STORAGE_KEYS.LAST_RESET, todayKey);
     }
 
-    // Save the updated/reset habits (this also handles first-time load)
     localStorage.setItem(LOCAL_STORAGE_KEYS.HABITS, JSON.stringify(habits));
     renderHabits(habits);
 }
@@ -389,17 +404,16 @@ function renderHabits(habits) {
         const habitRow = document.createElement('div');
         habitRow.className = 'habit-row';
         habitRow.innerHTML = `
-            <span class="text-sm font-medium text-gray-700">${habit.name}</span>
+            <span class="text-sm font-medium text-gray-300">${habit.name}</span>
             <button class="habit-btn text-xs flex items-center ${habit.done ? 'bg-green-500 hover:bg-green-600' : 'bg-pink-400 hover:bg-pink-500'}" data-habit-id="${habit.id}" data-done="${habit.done}">
                 ${buttonText}
             </button>
         `;
         tracker.appendChild(habitRow);
     });
-    // Re-render icons after adding new elements
+
     lucide.createIcons();
 
-    // Add listener to the new buttons
     tracker.querySelectorAll('.habit-btn').forEach(button => {
         button.addEventListener('click', toggleHabit);
     });
